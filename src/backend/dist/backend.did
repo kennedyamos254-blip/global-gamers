@@ -1,0 +1,127 @@
+type http_request_result = 
+ record {
+   body: blob;
+   headers: vec http_header;
+   status: nat;
+ };
+type http_header = 
+ record {
+   name: text;
+   value: text;
+ };
+type _ImmutableObjectStorageRefillResult = 
+ record {
+   success: opt bool;
+   topped_up_amount: opt nat;
+ };
+type _ImmutableObjectStorageRefillInformation = record {
+                                                  proposed_top_up_amount:
+                                                   opt nat;};
+type _ImmutableObjectStorageCreateCertificateResult = 
+ record {
+   blob_hash: text;
+   method: text;
+ };
+type VideoId = nat;
+type Video = 
+ record {
+   "blob": ExternalBlob;
+   createdAt: Timestamp;
+   description: text;
+   id: VideoId;
+   likeCount: nat;
+   owner: UserId;
+   ownerIsPremium: bool;
+   ownerUsername: text;
+   title: text;
+ };
+type UserRole = 
+ variant {
+   admin;
+   guest;
+   user;
+ };
+type UserProfilePublic = 
+ record {
+   bio: text;
+   id: UserId;
+   isPremium: bool;
+   totalLikesReceived: nat;
+   username: text;
+   videoCount: nat;
+ };
+type UserId = principal;
+type TransformationOutput = 
+ record {
+   body: blob;
+   headers: vec http_header;
+   status: nat;
+ };
+type TransformationInput = 
+ record {
+   context: blob;
+   response: http_request_result;
+ };
+type Timestamp = int;
+type StripeSessionStatus = 
+ variant {
+   completed: record {
+                response: text;
+                userPrincipal: opt text;
+              };
+   failed: record {error: text;};
+ };
+type StripeConfiguration = 
+ record {
+   allowedCountries: vec text;
+   secretKey: text;
+ };
+type ShoppingItem = 
+ record {
+   currency: text;
+   priceInCents: nat;
+   productDescription: text;
+   productName: text;
+   quantity: nat;
+ };
+type ExternalBlob = blob;
+service : {
+  _immutableObjectStorageBlobsAreLive: (hashes: vec blob) -> (vec bool) query;
+  _immutableObjectStorageBlobsToDelete: () -> (vec blob) query;
+  _immutableObjectStorageConfirmBlobDeletion: (blobs: vec blob) -> ();
+  _immutableObjectStorageCreateCertificate: (blobHash: text) ->
+   (_ImmutableObjectStorageCreateCertificateResult);
+  _immutableObjectStorageRefillCashier: (refillInformation:
+   opt _ImmutableObjectStorageRefillInformation) ->
+   (_ImmutableObjectStorageRefillResult);
+  _immutableObjectStorageUpdateGatewayPrincipals: () -> ();
+  _initializeAccessControl: () -> ();
+  activatePremium: () -> ();
+  assignCallerUserRole: (user: principal, role: UserRole) -> ();
+  createCheckoutSession: (items: vec ShoppingItem, successUrl: text,
+   cancelUrl: text) -> (text);
+  deleteVideo: (videoId: nat) -> ();
+  getCallerUserProfile: () -> (opt UserProfilePublic) query;
+  getCallerUserRole: () -> (UserRole) query;
+  getLikeCount: (videoId: nat) -> (nat) query;
+  getLikedVideos: () -> (vec Video) query;
+  getStripeSessionStatus: (sessionId: text) -> (StripeSessionStatus);
+  getUserPremiumStatus: (userId: principal) -> (bool) query;
+  getUserProfile: (userId: principal) -> (opt UserProfilePublic) query;
+  getUserVideos: (userId: principal) -> (vec Video) query;
+  getVideo: (videoId: nat) -> (opt Video) query;
+  getVideos: () -> (vec Video) query;
+  hasLiked: (videoId: nat) -> (bool) query;
+  isCallerAdmin: () -> (bool) query;
+  isPremiumMember: () -> (bool) query;
+  isStripeConfigured: () -> (bool) query;
+  likeVideo: (videoId: nat) -> ();
+  registerUser: (username: text, bio: text) -> ();
+  saveCallerUserProfile: (profile: UserProfilePublic) -> ();
+  setStripeConfiguration: (config: StripeConfiguration) -> ();
+  transform: (input: TransformationInput) -> (TransformationOutput) query;
+  unlikeVideo: (videoId: nat) -> ();
+  updateUserProfile: (username: text, bio: text) -> ();
+  uploadVideo: (title: text, description: text, "blob": ExternalBlob) ->
+   (nat);
+}

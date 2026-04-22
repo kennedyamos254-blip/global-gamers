@@ -1,0 +1,21 @@
+{
+  "overview": "Global Gamers is a video-sharing platform for bus simulator enthusiasts. Players create accounts, upload their gameplay videos, like and browse other creators' content, and unlock premium features.",
+  "features": [
+    "Video upload with drag-and-drop and progress tracking",
+    "Public video feed sorted by most recent",
+    "Like and unlike videos with live counts",
+    "User profiles with uploaded videos and liked content",
+    "Premium membership via Stripe for badges and perks",
+    "Internet Identity login — no passwords needed"
+  ],
+  "category": "social-video-sharing",
+  "tags": [
+    "gaming",
+    "bus-simulator",
+    "video",
+    "community",
+    "premium",
+    "social"
+  ],
+  "last_updated": "2026-04-22T01:43:11.569Z"
+}

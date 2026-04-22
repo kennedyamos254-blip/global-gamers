@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-display: "Bricolage Grotesque";
+    --font-body: "DM Sans";
+    --font-mono: "Geist Mono";
+    --radius: 0.625rem;
+
+    --background: 0.99 0 0;
+    --foreground: 0.15 0 0;
+    --card: 1.0 0 0;
+    --card-foreground: 0.15 0 0;
+    --popover: 1.0 0 0;
+    --popover-foreground: 0.15 0 0;
+    --primary: 0.35 0 0;
+    --primary-foreground: 0.98 0 0;
+    --secondary: 0.95 0 0;
+    --secondary-foreground: 0.25 0 0;
+    --muted: 0.95 0 0;
+    --muted-foreground: 0.5 0 0;
+    --accent: 0.35 0 0;
+    --accent-foreground: 0.98 0 0;
+    --destructive: 0.55 0.22 25;
+    --destructive-foreground: 0.98 0 0;
+    --border: 0.9 0 0;
+    --input: 0.9 0 0;
+    --ring: 0.35 0 0;
+    --chart-1: 0.65 0.22 40;
+    --chart-2: 0.6 0.12 185;
+    --chart-3: 0.4 0.07 227;
+    --chart-4: 0.83 0.19 84;
+    --chart-5: 0.77 0.19 70;
+    --sidebar: 0.98 0 0;
+    --sidebar-foreground: 0.15 0 0;
+    --sidebar-primary: 0.35 0 0;
+    --sidebar-primary-foreground: 0.98 0 0;
+    --sidebar-accent: 0.95 0 0;
+    --sidebar-accent-foreground: 0.25 0 0;
+    --sidebar-border: 0.9 0 0;
+    --sidebar-ring: 0.35 0 0;
+  }
+
+  .dark {
+    --background: 0.11 0.01 260;
+    --foreground: 0.93 0.01 260;
+    --card: 0.15 0.015 260;
+    --card-foreground: 0.93 0.01 260;
+    --popover: 0.19 0.015 260;
+    --popover-foreground: 0.93 0.01 260;
+
+    --primary: 0.72 0.2 190;
+    --primary-foreground: 0.11 0.01 260;
+
+    --secondary: 0.19 0.02 260;
+    --secondary-foreground: 0.82 0.01 260;
+    --muted: 0.19 0.02 260;
+    --muted-foreground: 0.52 0.01 260;
+
+    --accent: 0.68 0.22 55;
+    --accent-foreground: 0.11 0.01 260;
+
+    --destructive: 0.6 0.2 25;
+    --destructive-foreground: 0.93 0.01 25;
+
+    --border: 0.25 0.015 260;
+    --input: 0.25 0.015 260;
+    --ring: 0.72 0.2 190;
+
+    --chart-1: 0.72 0.2 190;
+    --chart-2: 0.68 0.22 55;
+    --chart-3: 0.6 0.18 150;
+    --chart-4: 0.75 0.15 85;
+    --chart-5: 0.58 0.15 25;
+
+    --sidebar: 0.15 0.015 260;
+    --sidebar-foreground: 0.93 0.01 260;
+    --sidebar-primary: 0.72 0.2 190;
+    --sidebar-primary-foreground: 0.11 0.01 260;
+    --sidebar-accent: 0.19 0.02 260;
+    --sidebar-accent-foreground: 0.82 0.01 260;
+    --sidebar-border: 0.25 0.015 260;
+    --sidebar-ring: 0.72 0.2 190;
+  }
+
+  * {
+    @apply border-border;
+  }
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+}
+
+@layer utilities {
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:opacity-90 transition-smooth;
+  }
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:opacity-90 transition-smooth;
+  }
+
+  /* Premium badge: golden border + golden text with subtle glow */
+  .badge-premium {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 border border-accent text-accent font-display text-xs font-bold tracking-wide;
+    box-shadow: 0 0 8px oklch(0.68 0.22 55 / 0.35);
+  }
+
+  /* Cyan glow for interactive elements */
+  .glow-primary {
+    box-shadow: 0 0 16px oklch(0.72 0.2 190 / 0.4);
+  }
+
+  /* Dark gradient on video thumbnails */
+  .video-card-overlay {
+    @apply absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent;
+  }
+
+  /* Subtle shimmer for skeleton */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      oklch(0.19 0.02 260) 25%,
+      oklch(0.22 0.02 260) 50%,
+      oklch(0.19 0.02 260) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Entrance animations */
+  .animate-fade-up {
+    animation: fadeUp 0.5s ease-out both;
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out both;
+  }
+
+  /* Card hover lift */
+  .card-hover {
+    @apply transition-smooth hover:-translate-y-0.5 hover:shadow-lg;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("/assets/fonts/BricolageGrotesque.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/assets/fonts/DMSans.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/assets/fonts/GeistMono.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

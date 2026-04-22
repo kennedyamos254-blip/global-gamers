@@ -56,6 +56,11 @@ actor {
       var adminAssigned : Bool;
       userRoles : Map__605269027<Principal, UserRole__1073662873>
     };
+  stable follows :
+    {
+      var root : Node__46230540<Principal, Set__532252804<Principal>>;
+      var size : Nat__490723111
+    };
   stable likes :
     {
       var root : Node__46230540<Nat, Set__532252804<Principal>>;

@@ -13,6 +13,7 @@ import UsersMixin "mixins/users-api";
 import VideosMixin "mixins/videos-api";
 import LikesMixin "mixins/likes-api";
 import PremiumMixin "mixins/premium-api";
+import FollowsMixin "mixins/follows-api";
 
 actor {
   // --- Authorization ---
@@ -26,14 +27,16 @@ actor {
   let users = Map.empty<Principal, UserTypes.UserProfileInternal>();
   let videos = Map.empty<Nat, VideoTypes.VideoInternal>();
   let likes = Map.empty<Nat, Set.Set<Principal>>();
+  let follows = Map.empty<Principal, Set.Set<Principal>>();
   let nextVideoId = { var value : Nat = 0 };
   var stripeConfiguration : ?Stripe.StripeConfiguration = null;
 
   // --- Mixins ---
-  include UsersMixin(accessControlState, users, videos, likes);
+  include UsersMixin(accessControlState, users, videos, likes, follows);
   include VideosMixin(accessControlState, users, videos, likes, nextVideoId);
   include LikesMixin(accessControlState, videos, likes);
   include PremiumMixin(accessControlState, users);
+  include FollowsMixin(accessControlState, follows);
 
   // --- Stripe (required directly in actor) ---
   public query func isStripeConfigured() : async Bool {

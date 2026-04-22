@@ -9,6 +9,7 @@ import type {
   Video,
   VideoUploadPayload,
 } from "../types";
+import { useAuth } from "./useAuth";
 
 // Typed actor — backend methods will be available once bindgen is wired
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -91,6 +92,19 @@ export function useVideos() {
       return (result ?? []).map(mapVideo);
     },
     enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSearchVideos(query: string) {
+  const { actor, isFetching } = useBackendActor();
+  return useQuery<Video[]>({
+    queryKey: ["searchVideos", query],
+    queryFn: async () => {
+      if (!actor || !query) return [];
+      const result = await actor.searchVideos(query);
+      return (result ?? []).map(mapVideo);
+    },
+    enabled: !!actor && !isFetching && query.length > 0,
   });
 }
 
@@ -223,6 +237,84 @@ export function useUnlikeVideo() {
   });
 }
 
+// ── Follow System ─────────────────────────────────────────────────────────────
+
+export function useIsFollowing(userId: string | null) {
+  const { actor, isFetching } = useBackendActor();
+  return useQuery<boolean>({
+    queryKey: ["isFollowing", userId],
+    queryFn: async () => {
+      if (!actor || !userId) return false;
+      return actor.isFollowing(Principal.fromText(userId));
+    },
+    enabled: !!actor && !isFetching && !!userId,
+  });
+}
+
+export function useGetFollowers(userId: string | null) {
+  const { actor, isFetching } = useBackendActor();
+  return useQuery<string[]>({
+    queryKey: ["followers", userId],
+    queryFn: async () => {
+      if (!actor || !userId) return [];
+      const result = await actor.getFollowers(Principal.fromText(userId));
+      return (result ?? []).map((p: Principal) => p.toText());
+    },
+    enabled: !!actor && !isFetching && !!userId,
+  });
+}
+
+export function useGetFollowing(userId: string | null) {
+  const { actor, isFetching } = useBackendActor();
+  return useQuery<string[]>({
+    queryKey: ["following", userId],
+    queryFn: async () => {
+      if (!actor || !userId) return [];
+      const result = await actor.getFollowing(Principal.fromText(userId));
+      return (result ?? []).map((p: Principal) => p.toText());
+    },
+    enabled: !!actor && !isFetching && !!userId,
+  });
+}
+
+export function useFollowUser() {
+  const { actor } = useBackendActor();
+  const qc = useQueryClient();
+  const { userId: myUserId } = useAuth();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      if (!actor) throw new Error("Not connected");
+      await actor.followUser(Principal.fromText(userId));
+    },
+    onSuccess: (_d, userId) => {
+      qc.invalidateQueries({ queryKey: ["isFollowing", userId] });
+      qc.invalidateQueries({ queryKey: ["followers", userId] });
+      qc.invalidateQueries({ queryKey: ["userProfile", userId] });
+      qc.invalidateQueries({ queryKey: ["myProfile"] });
+      qc.invalidateQueries({ queryKey: ["following", myUserId] });
+    },
+  });
+}
+
+export function useUnfollowUser() {
+  const { actor } = useBackendActor();
+  const qc = useQueryClient();
+  const { userId: myUserId } = useAuth();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      if (!actor) throw new Error("Not connected");
+      await actor.unfollowUser(Principal.fromText(userId));
+    },
+    onSuccess: (_d, userId) => {
+      qc.invalidateQueries({ queryKey: ["isFollowing", userId] });
+      qc.invalidateQueries({ queryKey: ["followers", userId] });
+      qc.invalidateQueries({ queryKey: ["userProfile", userId] });
+      qc.invalidateQueries({ queryKey: ["myProfile"] });
+      qc.invalidateQueries({ queryKey: ["following", myUserId] });
+    },
+  });
+}
+
 // ── Premium / Stripe ──────────────────────────────────────────────────────────
 
 export function usePremiumStatus() {
@@ -246,7 +338,6 @@ export function useCreateCheckoutSession() {
       const baseUrl = `${window.location.protocol}//${window.location.host}`;
       const successUrl = `${baseUrl}/payment-success`;
       const cancelUrl = `${baseUrl}/payment-cancel`;
-      // Backend takes items[], successUrl, cancelUrl — returns JSON string
       const premiumItem = {
         productName: "Global Gamers Premium",
         currency: "usd",
@@ -260,7 +351,6 @@ export function useCreateCheckoutSession() {
         successUrl,
         cancelUrl,
       );
-      // Parse the JSON response from Stripe
       const session = JSON.parse(raw) as { id?: string; url?: string };
       if (!session?.url) throw new Error("Stripe session missing url");
       return { sessionId: session.id ?? "", url: session.url };
@@ -295,6 +385,8 @@ function mapProfile(raw: any): UserProfile {
     totalLikes: Number(raw.totalLikesReceived ?? raw.totalLikes ?? 0),
     isPremium: !!raw.isPremium,
     createdAt: BigInt(0),
+    followerCount: Number(raw.followerCount ?? 0),
+    followingCount: Number(raw.followingCount ?? 0),
   };
 }
 

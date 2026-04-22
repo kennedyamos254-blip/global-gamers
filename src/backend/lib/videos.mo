@@ -84,6 +84,19 @@ module {
     owned.sort(func(a : Video, b : Video) : Order.Order { Int.compare(b.createdAt, a.createdAt) });
   };
 
+  public func searchVideos(
+    lowerQuery : Text,
+    videos : Map.Map<Nat, VideoInternal>,
+    users : Map.Map<Principal, UserTypes.UserProfileInternal>,
+    likes : Map.Map<Nat, Set.Set<Principal>>,
+  ) : [Video] {
+    let matched = videos.values()
+      .filter(func(v) { v.title.toLower().contains(#text lowerQuery) })
+      .map(func(v) { resolve(v, users, likes) })
+      .toArray();
+    matched.sort(func(a : Video, b : Video) : Order.Order { Int.compare(b.createdAt, a.createdAt) });
+  };
+
   public func getLikedVideos(
     viewerId : Principal,
     videos : Map.Map<Nat, VideoInternal>,

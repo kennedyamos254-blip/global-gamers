@@ -44,6 +44,8 @@ type UserRole =
 type UserProfilePublic = 
  record {
    bio: text;
+   followerCount: nat;
+   followingCount: nat;
    id: UserId;
    isPremium: bool;
    totalLikesReceived: nat;
@@ -101,8 +103,11 @@ service : {
   createCheckoutSession: (items: vec ShoppingItem, successUrl: text,
    cancelUrl: text) -> (text);
   deleteVideo: (videoId: nat) -> ();
+  followUser: (userId: UserId) -> ();
   getCallerUserProfile: () -> (opt UserProfilePublic) query;
   getCallerUserRole: () -> (UserRole) query;
+  getFollowers: (userId: UserId) -> (vec UserId) query;
+  getFollowing: (userId: UserId) -> (vec UserId) query;
   getLikeCount: (videoId: nat) -> (nat) query;
   getLikedVideos: () -> (vec Video) query;
   getStripeSessionStatus: (sessionId: text) -> (StripeSessionStatus);
@@ -113,13 +118,16 @@ service : {
   getVideos: () -> (vec Video) query;
   hasLiked: (videoId: nat) -> (bool) query;
   isCallerAdmin: () -> (bool) query;
+  isFollowing: (userId: UserId) -> (bool) query;
   isPremiumMember: () -> (bool) query;
   isStripeConfigured: () -> (bool) query;
   likeVideo: (videoId: nat) -> ();
   registerUser: (username: text, bio: text) -> ();
   saveCallerUserProfile: (profile: UserProfilePublic) -> ();
+  searchVideos: (titleQuery: text) -> (vec Video) query;
   setStripeConfiguration: (config: StripeConfiguration) -> ();
   transform: (input: TransformationInput) -> (TransformationOutput) query;
+  unfollowUser: (userId: UserId) -> ();
   unlikeVideo: (videoId: nat) -> ();
   updateUserProfile: (username: text, bio: text) -> ();
   uploadVideo: (title: text, description: text, "blob": ExternalBlob) ->

@@ -27,6 +27,8 @@ export const mockBackend = {
     videoCount: BigInt(4),
     isPremium: true,
     totalLikesReceived: BigInt(312),
+    followerCount: BigInt(18),
+    followingCount: BigInt(5),
   }),
 
   getCallerUserRole: async () => UserRole.user,
@@ -65,6 +67,8 @@ export const mockBackend = {
     videoCount: BigInt(2),
     isPremium: false,
     totalLikesReceived: BigInt(87),
+    followerCount: BigInt(6),
+    followingCount: BigInt(3),
   }),
 
   getUserVideos: async () => [

@@ -8,6 +8,8 @@ export interface UserProfile {
   totalLikes: number;
   isPremium: boolean;
   createdAt: bigint;
+  followerCount: number;
+  followingCount: number;
 }
 
 export interface Video {

@@ -1,12 +1,24 @@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link, useParams } from "@tanstack/react-router";
-import { Crown, Heart, Play, User, Video } from "lucide-react";
+import {
+  Crown,
+  Heart,
+  Play,
+  User,
+  UserCheck,
+  Users,
+  Video,
+} from "lucide-react";
 import { motion } from "motion/react";
+import { useState } from "react";
+import { FollowButton } from "../components/FollowButton";
 import { PremiumBadge } from "../components/PremiumBadge";
 import { VideoCard } from "../components/VideoCard";
 import { useAuth } from "../hooks/useAuth";
 import {
+  useGetFollowers,
+  useGetFollowing,
   useMyLikedVideos,
   useMyProfile,
   useUserProfile,
@@ -19,7 +31,6 @@ const SKELETON_KEYS = ["sk-a", "sk-b", "sk-c", "sk-d", "sk-e", "sk-f"];
 function ProfileSkeleton() {
   return (
     <div className="flex-1 bg-background" data-ocid="profile.loading_state">
-      {/* Header band skeleton */}
       <div className="bg-card border-b border-border py-8">
         <div className="container max-w-5xl">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
@@ -35,7 +46,6 @@ function ProfileSkeleton() {
           </div>
         </div>
       </div>
-      {/* Grid skeleton */}
       <div className="container max-w-5xl py-8">
         <Skeleton className="h-5 w-32 mb-5 skeleton-shimmer" />
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -113,11 +123,61 @@ function LikedCard({ video, index }: LikedCardProps) {
   );
 }
 
+// ── Followers / Following tab list ────────────────────────────────────────────
+function truncatePrincipal(p: string) {
+  if (p.length <= 16) return p;
+  return `${p.slice(0, 8)}…${p.slice(-6)}`;
+}
+
+interface FollowListProps {
+  userIds: string[];
+  emptyMessage: string;
+  ocidPrefix: string;
+}
+
+function FollowList({ userIds, emptyMessage, ocidPrefix }: FollowListProps) {
+  if (userIds.length === 0) {
+    return (
+      <div
+        className="text-center py-12 rounded-xl border border-dashed border-border bg-card/30"
+        data-ocid={`${ocidPrefix}.empty_state`}
+      >
+        <Users size={32} className="text-muted-foreground mx-auto mb-3" />
+        <p className="text-muted-foreground text-sm">{emptyMessage}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid sm:grid-cols-2 gap-2" data-ocid={`${ocidPrefix}.list`}>
+      {userIds.map((uid, i) => (
+        <Link
+          key={uid}
+          to="/user/$userId"
+          params={{ userId: uid }}
+          data-ocid={`${ocidPrefix}.item.${i + 1}`}
+          className="flex items-center gap-3 rounded-lg bg-card border border-border p-3 hover:border-primary/40 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <div className="w-9 h-9 rounded-full bg-secondary border border-border flex items-center justify-center shrink-0">
+            <UserCheck size={15} className="text-muted-foreground" />
+          </div>
+          <span className="text-sm font-display font-medium text-foreground truncate min-w-0">
+            {truncatePrincipal(uid)}
+          </span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
+type SocialTab = "followers" | "following";
+
 export function ProfilePage() {
   const params = useParams({ strict: false }) as { userId?: string };
   const { userId: myUserId, isAuthenticated } = useAuth();
   const isOwnProfile = !params.userId || params.userId === myUserId;
+  const [socialTab, setSocialTab] = useState<SocialTab>("followers");
 
   const { data: myProfile, isLoading: myLoading } = useMyProfile();
   const { data: otherProfile, isLoading: otherLoading } = useUserProfile(
@@ -131,6 +191,11 @@ export function ProfilePage() {
   const { data: userVideos = [], isLoading: videosLoading } =
     useUserVideos(profileId);
   const { data: likedVideos = [] } = useMyLikedVideos();
+
+  const { data: followers = [], isLoading: followersLoading } =
+    useGetFollowers(profileId);
+  const { data: following = [], isLoading: followingLoading } =
+    useGetFollowing(profileId);
 
   const profile = isOwnProfile ? myProfile : otherProfile;
   const isLoading = isOwnProfile ? myLoading : otherLoading;
@@ -208,6 +273,8 @@ export function ProfilePage() {
                   {profile.username}
                 </h1>
                 {profile.isPremium && <PremiumBadge size="md" />}
+                {/* Follow button for other profiles */}
+                {!isOwnProfile && <FollowButton userId={profile.id} />}
               </div>
 
               {profile.bio ? (
@@ -243,6 +310,26 @@ export function ProfilePage() {
                     {profile.totalLikes.toLocaleString()}
                   </span>
                   <span className="text-muted-foreground">Total Likes</span>
+                </div>
+                <div
+                  className="flex items-center gap-1.5 text-sm"
+                  data-ocid="profile.stats.followers"
+                >
+                  <Users size={15} className="text-primary" />
+                  <span className="font-display font-bold text-foreground">
+                    {(profile.followerCount ?? 0).toLocaleString()}
+                  </span>
+                  <span className="text-muted-foreground">Followers</span>
+                </div>
+                <div
+                  className="flex items-center gap-1.5 text-sm"
+                  data-ocid="profile.stats.following"
+                >
+                  <UserCheck size={15} className="text-primary" />
+                  <span className="font-display font-bold text-foreground">
+                    {(profile.followingCount ?? 0).toLocaleString()}
+                  </span>
+                  <span className="text-muted-foreground">Following</span>
                 </div>
                 {profile.isPremium && (
                   <Badge
@@ -417,6 +504,87 @@ export function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* ── Followers / Following Tabs ── */}
+      <div className="bg-background border-t border-border">
+        <div className="container max-w-5xl py-8">
+          {/* Tab controls */}
+          <div
+            className="flex items-center gap-1 bg-muted/40 rounded-lg p-1 w-fit mb-6"
+            data-ocid="profile.social.tabs"
+          >
+            <button
+              type="button"
+              onClick={() => setSocialTab("followers")}
+              data-ocid="profile.followers.tab"
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-display font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                socialTab === "followers"
+                  ? "bg-card border border-border text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Users size={14} />
+              Followers
+              <span className="ml-0.5 text-xs font-mono bg-muted rounded px-1">
+                {followers.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSocialTab("following")}
+              data-ocid="profile.following.tab"
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-display font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                socialTab === "following"
+                  ? "bg-card border border-border text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <UserCheck size={14} />
+              Following
+              <span className="ml-0.5 text-xs font-mono bg-muted rounded px-1">
+                {following.length}
+              </span>
+            </button>
+          </div>
+
+          {/* Tab content */}
+          {socialTab === "followers" &&
+            (followersLoading ? (
+              <div className="grid sm:grid-cols-2 gap-2">
+                {["a", "b", "c", "d"].map((k) => (
+                  <Skeleton
+                    key={k}
+                    className="h-14 rounded-lg skeleton-shimmer"
+                  />
+                ))}
+              </div>
+            ) : (
+              <FollowList
+                userIds={followers}
+                emptyMessage="No followers yet. Share your profile to grow your audience!"
+                ocidPrefix="profile.followers"
+              />
+            ))}
+
+          {socialTab === "following" &&
+            (followingLoading ? (
+              <div className="grid sm:grid-cols-2 gap-2">
+                {["a", "b", "c", "d"].map((k) => (
+                  <Skeleton
+                    key={k}
+                    className="h-14 rounded-lg skeleton-shimmer"
+                  />
+                ))}
+              </div>
+            ) : (
+              <FollowList
+                userIds={following}
+                emptyMessage="Not following anyone yet. Find creators you enjoy and hit Follow!"
+                ocidPrefix="profile.following"
+              />
+            ))}
+        </div>
+      </div>
     </div>
   );
 }

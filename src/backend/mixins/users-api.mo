@@ -6,12 +6,14 @@ import AccessControl "mo:caffeineai-authorization/access-control";
 import UserTypes "../types/users";
 import VideoTypes "../types/videos";
 import UsersLib "../lib/users";
+import FollowsLib "../lib/follows";
 
 mixin (
   accessControlState : AccessControl.AccessControlState,
   users : Map.Map<Principal, UserTypes.UserProfileInternal>,
   videos : Map.Map<Nat, VideoTypes.VideoInternal>,
   likes : Map.Map<Nat, Set.Set<Principal>>,
+  follows : Map.Map<Principal, Set.Set<Principal>>,
 ) {
   /// Register a new user profile. Caller must be authenticated.
   public shared ({ caller }) func registerUser(username : Text, bio : Text) : async () {
@@ -31,7 +33,9 @@ mixin (
       case (?profile) {
         let videoCount = UsersLib.getVideoCount(caller, videos);
         let totalLikes = UsersLib.getTotalLikesReceived(caller, videos, likes);
-        ?profile.toPublic(videoCount, totalLikes);
+        let fwrCount = FollowsLib.followerCount(caller, follows);
+        let fwgCount = FollowsLib.followingCount(caller, follows);
+        ?profile.toPublic(videoCount, totalLikes, fwrCount, fwgCount);
       };
       case null { null };
     };
@@ -54,7 +58,9 @@ mixin (
       case (?profile) {
         let videoCount = UsersLib.getVideoCount(userId, videos);
         let totalLikes = UsersLib.getTotalLikesReceived(userId, videos, likes);
-        ?profile.toPublic(videoCount, totalLikes);
+        let fwrCount = FollowsLib.followerCount(userId, follows);
+        let fwgCount = FollowsLib.followingCount(userId, follows);
+        ?profile.toPublic(videoCount, totalLikes, fwrCount, fwgCount);
       };
       case null { null };
     };

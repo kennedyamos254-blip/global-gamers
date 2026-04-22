@@ -20,6 +20,8 @@ module {
     isPremium : Bool;
     videoCount : Nat;
     totalLikesReceived : Nat;
+    followerCount : Nat;
+    followingCount : Nat;
   };
 
   // Mutable internal type for profile storage

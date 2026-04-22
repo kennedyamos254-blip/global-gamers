@@ -2,6 +2,7 @@ import Map "mo:core/Map";
 import Set "mo:core/Set";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
+import Text "mo:core/Text";
 import Storage "mo:caffeineai-object-storage/Storage";
 import AccessControl "mo:caffeineai-authorization/access-control";
 import UserTypes "../types/users";
@@ -85,5 +86,11 @@ mixin (
   /// Get videos liked by the caller.
   public query ({ caller }) func getLikedVideos() : async [VideoTypes.Video] {
     VideosLib.getLikedVideos(caller, videos, users, likes);
+  };
+
+  /// Search videos by title substring (case-insensitive).
+  public query func searchVideos(titleQuery : Text) : async [VideoTypes.Video] {
+    let lowerQuery = titleQuery.toLower();
+    VideosLib.searchVideos(lowerQuery, videos, users, likes);
   };
 };

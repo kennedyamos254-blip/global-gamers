@@ -23,6 +23,8 @@ module {
     self : UserProfileInternal,
     videoCount : Nat,
     totalLikesReceived : Nat,
+    followerCount : Nat,
+    followingCount : Nat,
   ) : UserProfile {
     {
       id = self.id;
@@ -31,6 +33,8 @@ module {
       isPremium = self.isPremium;
       videoCount;
       totalLikesReceived;
+      followerCount;
+      followingCount;
     };
   };
 

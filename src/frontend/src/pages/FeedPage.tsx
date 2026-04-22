@@ -3,10 +3,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@tanstack/react-router";
 import { Bus, SlidersHorizontal, Upload, Video } from "lucide-react";
 import { motion } from "motion/react";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { SearchBar } from "../components/SearchBar";
 import { VideoCard } from "../components/VideoCard";
 import { useAuth } from "../hooks/useAuth";
-import { useVideos } from "../hooks/useBackend";
+import { useSearchVideos, useVideos } from "../hooks/useBackend";
 
 const SKELETON_KEYS = [
   "sk-a",
@@ -21,49 +22,79 @@ const SKELETON_KEYS = [
 ];
 
 export function FeedPage() {
-  const { data: videos, isLoading, isError } = useVideos();
+  const [searchQuery, setSearchQuery] = useState("");
+  const isSearching = searchQuery.trim().length > 0;
+
+  const {
+    data: allVideos,
+    isLoading: allLoading,
+    isError: allError,
+  } = useVideos();
+  const {
+    data: searchResults = [],
+    isLoading: searchLoading,
+    isError: searchError,
+  } = useSearchVideos(searchQuery.trim());
+
   const { isAuthenticated } = useAuth();
 
-  // Sort most-recent first
-  const sortedVideos = useMemo(() => {
-    if (!videos) return [];
-    return [...videos].sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1));
-  }, [videos]);
+  const handleSearch = useCallback((val: string) => setSearchQuery(val), []);
+
+  const displayVideos = useMemo(() => {
+    if (isSearching) return searchResults;
+    if (!allVideos) return [];
+    return [...allVideos].sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1));
+  }, [isSearching, allVideos, searchResults]);
+
+  const isLoading = isSearching ? searchLoading : allLoading;
+  const isError = isSearching ? searchError : allError;
 
   return (
     <div className="flex-1 bg-background" data-ocid="feed.page">
       {/* Feed header bar */}
       <div className="bg-card border-b border-border">
-        <div className="container max-w-7xl py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="container max-w-7xl py-4 flex flex-col gap-3 sm:gap-0 sm:flex-row sm:items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center">
               <Video size={14} className="text-primary" />
             </div>
             <div>
               <h1 className="font-display text-lg font-bold text-foreground leading-tight">
-                Latest Videos
+                {isSearching ? "Search Results" : "Latest Videos"}
               </h1>
-              {!isLoading && sortedVideos.length > 0 && (
+              {!isLoading && (
                 <p className="text-xs text-muted-foreground">
-                  {sortedVideos.length}{" "}
-                  {sortedVideos.length === 1 ? "video" : "videos"} · sorted by
-                  newest
+                  {isSearching
+                    ? `${displayVideos.length} clip${displayVideos.length !== 1 ? "s" : ""} for "${searchQuery}"`
+                    : displayVideos.length > 0
+                      ? `${displayVideos.length} ${displayVideos.length === 1 ? "video" : "videos"} · sorted by newest`
+                      : null}
                 </p>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 border border-border rounded-md px-2.5 py-1.5">
-              <SlidersHorizontal size={12} />
-              <span>Most Recent</span>
-            </div>
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            {/* Search bar */}
+            <SearchBar
+              value={searchQuery}
+              onChange={handleSearch}
+              className="w-full sm:w-64"
+            />
+
+            {!isSearching && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 border border-border rounded-md px-2.5 py-1.5 shrink-0">
+                <SlidersHorizontal size={12} />
+                <span>Most Recent</span>
+              </div>
+            )}
+
             {isAuthenticated && (
               <Button
                 asChild
                 size="sm"
                 data-ocid="feed.upload_button"
-                className="font-display font-semibold"
+                className="font-display font-semibold shrink-0"
               >
                 <Link to="/upload">
                   <Upload size={13} className="mr-1.5" />
@@ -120,54 +151,94 @@ export function FeedPage() {
           </div>
         )}
 
-        {/* Empty state */}
-        {!isLoading && !isError && sortedVideos.length === 0 && (
-          <div
-            className="flex flex-col items-center justify-center py-24 text-center"
-            data-ocid="feed.empty_state"
-          >
+        {/* Search empty state */}
+        {!isLoading &&
+          !isError &&
+          isSearching &&
+          displayVideos.length === 0 && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              className="flex flex-col items-center justify-center py-24 text-center"
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="flex flex-col items-center"
+              transition={{ duration: 0.35 }}
+              data-ocid="feed.search_empty_state"
             >
-              <div className="w-20 h-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5">
-                <Bus size={36} className="text-primary" />
+              <div className="w-20 h-20 rounded-2xl bg-muted border border-border flex items-center justify-center mb-5">
+                <Bus size={36} className="text-muted-foreground" />
               </div>
-              <h2 className="font-display text-2xl font-bold text-foreground mb-2">
-                No videos yet
+              <h2 className="font-display text-xl font-bold text-foreground mb-2">
+                No clips found
               </h2>
-              <p className="text-muted-foreground text-sm max-w-sm mb-6 leading-relaxed">
-                Be the first to share your bus simulator adventures. Upload a
-                clip and start the Global Gamers community rolling!
+              <p className="text-muted-foreground text-sm max-w-xs">
+                No clips match{" "}
+                <span className="text-foreground font-medium">
+                  &ldquo;{searchQuery}&rdquo;
+                </span>
+                . Try a different title or browse all videos.
               </p>
-              {isAuthenticated ? (
-                <Button asChild data-ocid="feed.empty_state_upload_button">
-                  <Link to="/upload">
-                    <Upload size={15} className="mr-2" />
-                    Upload First Video
-                  </Link>
-                </Button>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Sign in to upload your first video
-                </p>
-              )}
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                data-ocid="feed.search_clear_all_button"
+                className="mt-5 text-sm text-primary hover:underline font-display font-semibold focus-visible:outline-none focus-visible:underline"
+              >
+                Clear search
+              </button>
             </motion.div>
-          </div>
-        )}
+          )}
+
+        {/* Feed empty state (no videos at all) */}
+        {!isLoading &&
+          !isError &&
+          !isSearching &&
+          displayVideos.length === 0 && (
+            <div
+              className="flex flex-col items-center justify-center py-24 text-center"
+              data-ocid="feed.empty_state"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="flex flex-col items-center"
+              >
+                <div className="w-20 h-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5">
+                  <Bus size={36} className="text-primary" />
+                </div>
+                <h2 className="font-display text-2xl font-bold text-foreground mb-2">
+                  No videos yet
+                </h2>
+                <p className="text-muted-foreground text-sm max-w-sm mb-6 leading-relaxed">
+                  Be the first to share your bus simulator adventures. Upload a
+                  clip and start the Global Gamers community rolling!
+                </p>
+                {isAuthenticated ? (
+                  <Button asChild data-ocid="feed.empty_state_upload_button">
+                    <Link to="/upload">
+                      <Upload size={15} className="mr-2" />
+                      Upload First Video
+                    </Link>
+                  </Button>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Sign in to upload your first video
+                  </p>
+                )}
+              </motion.div>
+            </div>
+          )}
 
         {/* Video grid */}
-        {!isLoading && !isError && sortedVideos.length > 0 && (
+        {!isLoading && !isError && displayVideos.length > 0 && (
           <motion.div
+            key={isSearching ? `search-${searchQuery}` : "all"}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
             className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
             data-ocid="feed.list"
           >
-            {sortedVideos.map((video, i) => (
+            {displayVideos.map((video, i) => (
               <motion.div
                 key={video.id}
                 initial={{ opacity: 0, y: 18 }}

@@ -119,6 +119,8 @@ export interface UserProfilePublic {
     username: string;
     videoCount: bigint;
     isPremium: boolean;
+    followerCount: bigint;
+    followingCount: bigint;
     totalLikesReceived: bigint;
 }
 export interface _ImmutableObjectStorageRefillResult {
@@ -180,8 +182,11 @@ export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
     deleteVideo(videoId: bigint): Promise<void>;
+    followUser(userId: UserId): Promise<void>;
     getCallerUserProfile(): Promise<UserProfilePublic | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getFollowers(userId: UserId): Promise<Array<UserId>>;
+    getFollowing(userId: UserId): Promise<Array<UserId>>;
     getLikeCount(videoId: bigint): Promise<bigint>;
     getLikedVideos(): Promise<Array<Video>>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
@@ -192,13 +197,16 @@ export interface backendInterface {
     getVideos(): Promise<Array<Video>>;
     hasLiked(videoId: bigint): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
+    isFollowing(userId: UserId): Promise<boolean>;
     isPremiumMember(): Promise<boolean>;
     isStripeConfigured(): Promise<boolean>;
     likeVideo(videoId: bigint): Promise<void>;
     registerUser(username: string, bio: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfilePublic): Promise<void>;
+    searchVideos(titleQuery: string): Promise<Array<Video>>;
     setStripeConfiguration(config: StripeConfiguration): Promise<void>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
+    unfollowUser(userId: UserId): Promise<void>;
     unlikeVideo(videoId: bigint): Promise<void>;
     updateUserProfile(username: string, bio: string): Promise<void>;
     uploadVideo(title: string, description: string, blob: ExternalBlob): Promise<bigint>;
@@ -360,6 +368,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async followUser(arg0: UserId): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.followUser(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.followUser(arg0);
+            return result;
+        }
+    }
     async getCallerUserProfile(): Promise<UserProfilePublic | null> {
         if (this.processError) {
             try {
@@ -386,6 +408,34 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getCallerUserRole();
             return from_candid_UserRole_n11(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getFollowers(arg0: UserId): Promise<Array<UserId>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getFollowers(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getFollowers(arg0);
+            return result;
+        }
+    }
+    async getFollowing(arg0: UserId): Promise<Array<UserId>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getFollowing(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getFollowing(arg0);
+            return result;
         }
     }
     async getLikeCount(arg0: bigint): Promise<bigint> {
@@ -528,6 +578,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async isFollowing(arg0: UserId): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.isFollowing(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.isFollowing(arg0);
+            return result;
+        }
+    }
     async isPremiumMember(): Promise<boolean> {
         if (this.processError) {
             try {
@@ -598,6 +662,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async searchVideos(arg0: string): Promise<Array<Video>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.searchVideos(arg0);
+                return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.searchVideos(arg0);
+            return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async setStripeConfiguration(arg0: StripeConfiguration): Promise<void> {
         if (this.processError) {
             try {
@@ -623,6 +701,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.transform(arg0);
+            return result;
+        }
+    }
+    async unfollowUser(arg0: UserId): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.unfollowUser(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.unfollowUser(arg0);
             return result;
         }
     }
